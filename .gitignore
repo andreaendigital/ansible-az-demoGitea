@@ -1,0 +1,42 @@
+# Ansible
+*.retry
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Secrets and credentials
+*.pem
+*.key
+*.vault
+secrets/
+credentials/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Terraform (if any)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Temp files
+tmp/
+temp/
+*.tmp
