@@ -1,0 +1,268 @@
+---
+- name: Update packages (Ubuntu/Debian)
+  apt:
+    update_cache: yes
+    upgrade: dist
+  when: ansible_os_family == "Debian"
+
+- name: Install dependencies
+  apt:
+    name: 
+      - git
+      - wget
+      - tar
+      - mysql-client
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Create git group
+  group:
+    name: git
+    system: yes
+
+- name: Create git user (following official guide)
+  user:
+    name: git
+    system: yes
+    shell: /bin/bash
+    comment: "Git Version Control"
+    group: git
+    home: /home/git
+    create_home: yes
+
+- name: Create required directory structure
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "/var/lib/gitea", owner: "git", group: "git", mode: "0750" }
+    - { path: "/var/lib/gitea/custom", owner: "git", group: "git", mode: "0750" }
+    - { path: "/var/lib/gitea/data", owner: "git", group: "git", mode: "0750" }
+    - { path: "/var/lib/gitea/log", owner: "git", group: "git", mode: "0750" }
+    - { path: "/var/lib/gitea/data/gitea-repositories", owner: "git", group: "git", mode: "0750" }
+    - { path: "/etc/gitea", owner: "root", group: "git", mode: "0770" }
+
+- name: Download Gitea binary (v{{ gitea_version }})
+  get_url:
+    url: https://dl.gitea.com/gitea/{{ gitea_version }}/gitea-{{ gitea_version }}-linux-amd64
+    dest: /usr/local/bin/gitea
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Generate Gitea secret key
+  command: /usr/local/bin/gitea generate secret SECRET_KEY
+  register: gitea_secret_key_output
+  changed_when: false
+
+- name: Generate Gitea internal token
+  command: /usr/local/bin/gitea generate secret INTERNAL_TOKEN
+  register: gitea_internal_token_output
+  changed_when: false
+
+- name: Set secret key fact
+  set_fact:
+    gitea_secret_key: "{{ gitea_secret_key_output.stdout }}"
+    gitea_internal_token: "{{ gitea_internal_token_output.stdout }}"
+
+- name: Wait for Azure MySQL Flexible Server to be available
+  wait_for:
+    host: "{{ mysql_host }}"
+    port: 3306
+    timeout: 60
+    delay: 5
+  when: mysql_host is defined
+
+- name: Deploy Gitea configuration (app.ini) with Azure MySQL
+  template:
+    src: app.ini.j2
+    dest: /etc/gitea/app.ini
+    owner: git
+    group: git
+    mode: "0640"
+
+- name: Create Gitea service
+  template:
+    src: gitea.service
+    dest: /etc/systemd/system/gitea.service
+
+- name: Set GITEA_WORK_DIR environment
+  lineinfile:
+    path: /etc/environment
+    line: "GITEA_WORK_DIR=/var/lib/gitea"
+    create: yes
+
+- name: Initialize Gitea database (migrate)
+  command: /usr/local/bin/gitea migrate -c /etc/gitea/app.ini
+  become: yes
+  become_user: git
+  environment:
+    GITEA_WORK_DIR: /var/lib/gitea
+  register: gitea_migrate
+  changed_when: "'Upgrade database schema to latest version' in gitea_migrate.stdout or 'Current database version is the same' not in gitea_migrate.stdout"
+  failed_when:
+    - gitea_migrate.rc != 0
+    - "'has already been created' not in gitea_migrate.stderr"
+
+- name: Show migration output
+  debug:
+    var: gitea_migrate.stdout_lines
+  when: gitea_migrate.stdout_lines is defined
+
+- name: Enable and start Gitea service (systemd)
+  systemd:
+    name: gitea
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Check Gitea service status immediately
+  command: systemctl status gitea
+  register: gitea_immediate_status
+  failed_when: false
+  changed_when: false
+
+- name: Show immediate service status
+  debug:
+    var: gitea_immediate_status.stdout_lines
+
+- name: Check Gitea logs for errors
+  command: journalctl -u gitea -n 100 --no-pager --all
+  register: gitea_logs
+  failed_when: false
+  changed_when: false
+
+- name: Show Gitea logs
+  debug:
+    var: gitea_logs.stdout_lines
+
+- name: Check for specific error patterns in logs
+  command: journalctl -u gitea -n 100 --no-pager --all --grep "error|Error|ERROR|fatal|Fatal|FATAL|panic"
+  register: gitea_errors
+  failed_when: false
+  changed_when: false
+
+- name: Show specific errors if found
+  debug:
+    var: gitea_errors.stdout_lines
+  when: gitea_errors.stdout_lines is defined and gitea_errors.stdout_lines | length > 0
+
+- name: Check if Gitea log file exists
+  stat:
+    path: /var/lib/gitea/log/gitea.log
+  register: gitea_log_file
+
+- name: Show last 100 lines of Gitea application log
+  command: tail -n 100 /var/lib/gitea/log/gitea.log
+  register: gitea_app_log
+  failed_when: false
+  changed_when: false
+  when: gitea_log_file.stat.exists
+
+- name: Display Gitea application log
+  debug:
+    var: gitea_app_log.stdout_lines
+  when: gitea_log_file.stat.exists and gitea_app_log.stdout_lines is defined
+
+- name: Wait for Gitea to start
+  wait_for:
+    port: 3000
+    host: localhost
+    delay: 10
+    timeout: 120
+
+- name: Create initial admin user (optional)
+  command: >
+    /usr/local/bin/gitea admin user create
+    --username {{ gitea_admin_username }}
+    --password {{ gitea_admin_password }}
+    --email {{ gitea_admin_email }}
+    --admin
+    -c /etc/gitea/app.ini
+  become: yes
+  become_user: git
+  environment:
+    GITEA_WORK_DIR: /var/lib/gitea
+  when:
+    - gitea_admin_username is defined
+    - gitea_admin_password is defined
+    - gitea_admin_email is defined
+  register: admin_creation
+  failed_when:
+    - admin_creation.rc != 0
+    - "'user already exists' not in admin_creation.stderr"
+  changed_when: admin_creation.rc == 0
+
+- name: Verify Gitea service status
+  systemd:
+    name: gitea
+  register: gitea_service_status
+
+- name: Verify Gitea service availability
+  uri:
+    url: "http://localhost:3000"
+    method: GET
+    status_code: 200
+    timeout: 10
+  retries: 5
+  delay: 10
+  register: gitea_health
+
+- name: Display deployment status summary
+  debug:
+    msg: |
+      ════════════════════════════════════════════════════════════════
+      ✅ Azure Gitea Deployment Complete - FULLY CONFIGURED
+      ════════════════════════════════════════════════════════════════
+      
+      📊 Service Status:
+      - Gitea Web (3000): {{ 'HEALTHY ✓' if gitea_health.status == 200 else 'STARTING...' }}
+      - SystemD Service: {{ gitea_service_status.status.ActiveState }}
+      - Version: {{ gitea_version }}
+      - Auto-Start: ENABLED (boots automatically)
+
+      🔧 Configuration:
+      - Database: Azure MySQL Flexible Server - CONFIGURED ✓
+      - MySQL FQDN: {{ mysql_fqdn }}
+      - Database Name: {{ mysql_dbname }}
+      - Install Lock: ENABLED (no web installer)
+      - Secret Keys: GENERATED ✓
+
+      📁 Directories:
+      - Working Dir: /var/lib/gitea
+      - Config File: /etc/gitea/app.ini
+      - Log Files: /var/lib/gitea/log
+      - Repositories: /var/lib/gitea/data/gitea-repositories
+      
+      👤 System User:
+      - User: git
+      - Group: git
+      - Home: /home/git
+
+      {% if gitea_admin_username is defined %}
+      🔐 Admin User:
+      - Username: {{ gitea_admin_username }}
+      - Email: {{ gitea_admin_email }}
+      - Created: {{ 'YES ✓' if admin_creation.rc == 0 else 'Already exists' }}
+      {% else %}
+      🔐 Admin User:
+      - First user to register will become admin
+      - Registration is open (DISABLE_REGISTRATION = false)
+      {% endif %}
+
+      🌐 Access:
+      - Direct: http://{{ ansible_default_ipv4.address }}:3000
+      - Via Load Balancer: (use Azure LB frontend IP when available)
+
+      🛠️ Service Management:
+      - Status:  sudo systemctl status gitea
+      - Restart: sudo systemctl restart gitea
+      - Stop:    sudo systemctl stop gitea
+      - Logs:    sudo journalctl -u gitea -f
+
+      ════════════════════════════════════════════════════════════════
+      🎉 Gitea is READY TO USE - NO MANUAL CONFIGURATION REQUIRED!
+      ════════════════════════════════════════════════════════════════
