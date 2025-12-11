@@ -1,0 +1,5 @@
+---
+- hosts: azureGitea
+  become: yes
+  roles:
+    - deploy
