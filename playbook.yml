@@ -3,3 +3,9 @@
   become: yes
   roles:
     - deploy
+
+# Play for MySQL Replica VM (read replica/failover scenario)
+- hosts: mysql-replica
+  become: yes
+  roles:
+    - mysql-replica

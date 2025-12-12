@@ -2,7 +2,23 @@
 
 Ansible automation for deploying Gitea on Azure infrastructure with MySQL Flexible Server.
 
-## í³‹ Overview
+## Modular MySQL Replica/Failover Support
+
+This repository now supports deploying a dedicated MySQL VM as a read replica, ready for future integration as a failover target (e.g., AWS RDS replica scenario). The playbook is modular:
+
+- `roles/mysql-replica`: Installs and configures MySQL as a replica for Gitea, with clear variables for replication and failover.
+- `inventory.ini`: Includes both the Gitea VM and a MySQL replica VM, with variables for each.
+- Easily switch Gitea to use the replica DB by updating connection variables.
+
+**Purpose:**
+You can test the full stack, but later keep only the DB as a replica. When AWS fails over, deploy the app and connect to the active replica DB.
+
+**Key variables:**
+- `gitea_replica_db`, `gitea_replica_user`, `gitea_replica_password`, `mysql_server_id`, etc.
+
+See `roles/mysql-replica/` and `group_vars/mysql-replica.yml.example` for details.
+
+## ï¿½ï¿½ï¿½ Overview
 
 This repository contains Ansible playbooks and roles for automating the deployment of Gitea on Azure Virtual Machines. It's designed to work in conjunction with the [tf-az-infra-demoGitea](https://github.com/andreaendigital/tf-az-infra-demoGitea) Terraform repository.
 
@@ -16,7 +32,7 @@ This repository contains Ansible playbooks and roles for automating the deployme
 - âœ… Optional admin user pre-configuration
 - âœ… Production-ready security settings
 
-## í¿—ï¸ Architecture
+## ï¿½ï¿½ï¿½ï¸ Architecture
 
 ```
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
@@ -44,7 +60,7 @@ This repository contains Ansible playbooks and roles for automating the deployme
     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
-## í³¦ Prerequisites
+## ï¿½ï¿½ï¿½ Prerequisites
 
 ### Required Software
 
@@ -59,7 +75,7 @@ This repository contains Ansible playbooks and roles for automating the deployme
 - Azure infrastructure must be deployed first using Terraform
 - Network connectivity to Azure resources
 
-## íº€ Quick Start
+## ï¿½ï¿½ï¿½ Quick Start
 
 ### 1. Deploy Azure Infrastructure
 
@@ -144,7 +160,7 @@ With vault-encrypted variables:
 ansible-playbook -i inventory.ini playbook.yml --ask-vault-pass
 ```
 
-## í³ Project Structure
+## ï¿½ï¿½ï¿½ Project Structure
 
 ```
 ansible-az-demoGitea/
@@ -164,7 +180,7 @@ ansible-az-demoGitea/
     â””â”€â”€ pull_request_template.md
 ```
 
-## í´§ Configuration
+## ï¿½ï¿½ï¿½ Configuration
 
 ### Gitea Version
 
@@ -190,7 +206,7 @@ gitea_admin_email: "admin@example.com"
 
 Omit the `gitea_admin_*` variables. The first user to register becomes admin.
 
-## í¶š Key Differences from AWS Version
+## ï¿½ï¿½ï¿½ Key Differences from AWS Version
 
 | Aspect | AWS (ANSIBLE-DEMOGITEA) | Azure (This Repo) |
 |--------|-------------------------|-------------------|
@@ -201,7 +217,7 @@ Omit the `gitea_admin_*` variables. The first user to register becomes admin.
 | **Package Manager** | `yum` (Amazon Linux) | `apt` (Ubuntu) |
 | **Database** | AWS RDS | Azure MySQL Flexible Server |
 
-## í´ Security Best Practices
+## ï¿½ï¿½ï¿½ Security Best Practices
 
 1. **Never commit unencrypted credentials**
    ```bash
@@ -220,7 +236,7 @@ Omit the `gitea_admin_*` variables. The first user to register becomes admin.
    - Store secrets centrally
    - Reference via environment variables
 
-## í·ª Testing
+## ï¿½ï¿½ï¿½ Testing
 
 ### Check Syntax
 
@@ -240,7 +256,7 @@ ansible-playbook -i inventory.ini playbook.yml --check
 ansible -i inventory.ini all -m ping
 ```
 
-## í³Š Post-Deployment Verification
+## ï¿½ï¿½ï¿½ Post-Deployment Verification
 
 After successful deployment:
 
@@ -259,7 +275,7 @@ After successful deployment:
    ssh azureuser@<VM_PUBLIC_IP> "sudo journalctl -u gitea -f"
    ```
 
-## í´„ Updating Gitea
+## ï¿½ï¿½ï¿½ Updating Gitea
 
 To update:
 
@@ -269,7 +285,7 @@ To update:
    ansible-playbook -i inventory.ini playbook.yml
    ```
 
-## í°› Troubleshooting
+## ï¿½ï¿½ï¿½ Troubleshooting
 
 ### SSH Connection Failed
 
@@ -302,7 +318,7 @@ sudo tail -f /var/lib/gitea/log/gitea.log
 sudo /usr/local/bin/gitea doctor -c /etc/gitea/app.ini
 ```
 
-## í» ï¸ CI/CD Integration
+## ï¿½ï¿½ï¿½ï¸ CI/CD Integration
 
 ### Jenkins Pipeline Example
 
@@ -354,13 +370,13 @@ pipeline {
 }
 ```
 
-## í´— Related Repositories
+## ï¿½ï¿½ï¿½ Related Repositories
 
 - [tf-az-infra-demoGitea](https://github.com/andreaendigital/tf-az-infra-demoGitea) - Terraform for Azure
 - [tf-infra-demoGitea](https://github.com/andreaendigital/tf-infra-demoGitea) - Terraform for AWS
 - [ansible-demoGitea](https://github.com/andreaendigital/ansible-demoGitea) - Ansible for AWS
 
-## í³ Development
+## ï¿½ï¿½ï¿½ Development
 
 ### Commit Convention
 

@@ -1,0 +1,89 @@
+---
+# Install and configure MySQL as a read replica for Gitea
+
+- name: Install MySQL Server
+  apt:
+    name: mysql-server
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Ensure MySQL is started and enabled
+  systemd:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: Configure MySQL for replication (my.cnf)
+  template:
+    src: my.cnf.j2
+    dest: /etc/mysql/my.cnf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart MySQL
+
+- name: Set root password and create Gitea replica user
+  mysql_user:
+    name: "{{ gitea_replica_user }}"
+    password: "{{ gitea_replica_password }}"
+    host: "%"
+    priv: "{{ gitea_replica_db }}.*:ALL,GRANT"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Create Gitea replica database
+  mysql_db:
+    name: "{{ gitea_replica_db }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Ensure bind-address is set for internal connections
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^bind-address'
+    line: 'bind-address = 0.0.0.0'
+    state: present
+  notify: Restart MySQL
+
+- name: Ensure binary logging is enabled for replication
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^log_bin'
+    line: 'log_bin = /var/log/mysql/mysql-bin.log'
+    state: present
+  notify: Restart MySQL
+
+- name: Ensure server-id is set for replication
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^server-id'
+    line: 'server-id = {{ mysql_server_id | default(2) }}'
+    state: present
+  notify: Restart MySQL
+
+- name: Flush privileges
+  mysql_user:
+    name: "{{ gitea_replica_user }}"
+    host: "%"
+    check_implicit_admin: yes
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    priv: "{{ gitea_replica_db }}.*:ALL,GRANT"
+    update_password: on_create
+
+- name: Open MySQL port 3306 (if using UFW)
+  ufw:
+    rule: allow
+    port: 3306
+    proto: tcp
+  when: ansible_os_family == "Debian"
+
+# Handlers
+- name: Restart MySQL
+  systemd:
+    name: mysql
+    state: restarted

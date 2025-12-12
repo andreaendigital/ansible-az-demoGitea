@@ -1,0 +1,8 @@
+# Example group_vars for MySQL replica role
+# Copy to group_vars/mysql-replica.yml and adjust as needed
+
+mysql_root_password: "ChangeThisRootPassword!"
+gitea_replica_user: "gitea_replica"
+gitea_replica_password: "ChangeThisReplicaPassword!"
+gitea_replica_db: "gitea_replica_db"
+mysql_server_id: 2
