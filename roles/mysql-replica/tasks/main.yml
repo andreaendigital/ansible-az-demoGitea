@@ -43,24 +43,24 @@
 - name: Ensure bind-address is set for internal connections
   lineinfile:
     path: /etc/mysql/mysql.conf.d/mysqld.cnf
-    regexp: '^bind-address'
-    line: 'bind-address = 0.0.0.0'
+    regexp: "^bind-address"
+    line: "bind-address = 0.0.0.0"
     state: present
   notify: Restart MySQL
 
 - name: Ensure binary logging is enabled for replication
   lineinfile:
     path: /etc/mysql/mysql.conf.d/mysqld.cnf
-    regexp: '^log_bin'
-    line: 'log_bin = /var/log/mysql/mysql-bin.log'
+    regexp: "^log_bin"
+    line: "log_bin = /var/log/mysql/mysql-bin.log"
     state: present
   notify: Restart MySQL
 
 - name: Ensure server-id is set for replication
   lineinfile:
     path: /etc/mysql/mysql.conf.d/mysqld.cnf
-    regexp: '^server-id'
-    line: 'server-id = {{ mysql_server_id | default(2) }}'
+    regexp: "^server-id"
+    line: "server-id = {{ mysql_server_id | default(2) }}"
     state: present
   notify: Restart MySQL
 

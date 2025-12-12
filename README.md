@@ -14,6 +14,7 @@ This repository now supports deploying a dedicated MySQL VM as a read replica, r
 You can test the full stack, but later keep only the DB as a replica. When AWS fails over, deploy the app and connect to the active replica DB.
 
 **Key variables:**
+
 - `gitea_replica_db`, `gitea_replica_user`, `gitea_replica_password`, `mysql_server_id`, etc.
 
 See `roles/mysql-replica/` and `group_vars/mysql-replica.yml.example` for details.
@@ -116,6 +117,7 @@ vi inventory.ini
 ```
 
 Replace:
+
 - `<VM_PUBLIC_IP>` with the static IP from step 2
 - `<MYSQL_FQDN>` with MySQL FQDN
 - `<MYSQL_HOST>` with MySQL host
@@ -208,27 +210,30 @@ Omit the `gitea_admin_*` variables. The first user to register becomes admin.
 
 ## ��� Key Differences from AWS Version
 
-| Aspect | AWS (ANSIBLE-DEMOGITEA) | Azure (This Repo) |
-|--------|-------------------------|-------------------|
-| **Inventory** | Dynamic (`generate_inventory.sh`) | Static (one-time setup) |
-| **IP Type** | Dynamic (changes each deploy) | **Static** (never changes) |
-| **Host Group** | `infraGitea` | `azureGitea` |
-| **SSH User** | `ec2-user` | `azureuser` |
-| **Package Manager** | `yum` (Amazon Linux) | `apt` (Ubuntu) |
-| **Database** | AWS RDS | Azure MySQL Flexible Server |
+| Aspect              | AWS (ANSIBLE-DEMOGITEA)           | Azure (This Repo)           |
+| ------------------- | --------------------------------- | --------------------------- |
+| **Inventory**       | Dynamic (`generate_inventory.sh`) | Static (one-time setup)     |
+| **IP Type**         | Dynamic (changes each deploy)     | **Static** (never changes)  |
+| **Host Group**      | `infraGitea`                      | `azureGitea`                |
+| **SSH User**        | `ec2-user`                        | `azureuser`                 |
+| **Package Manager** | `yum` (Amazon Linux)              | `apt` (Ubuntu)              |
+| **Database**        | AWS RDS                           | Azure MySQL Flexible Server |
 
 ## ��� Security Best Practices
 
 1. **Never commit unencrypted credentials**
+
    ```bash
    ansible-vault encrypt group_vars/all.yml
    ```
 
 2. **Use strong passwords**
+
    - Minimum 12 characters
    - Mix of uppercase, lowercase, numbers, symbols
 
 3. **Restrict SSH access**
+
    - NSG rule limits SSH to your IP (`admin_source_ip`)
    - SSH keys only (no passwords)
 
@@ -261,11 +266,13 @@ ansible -i inventory.ini all -m ping
 After successful deployment:
 
 1. **Check Gitea service:**
+
    ```bash
    ssh azureuser@<VM_PUBLIC_IP> "sudo systemctl status gitea"
    ```
 
 2. **Access Gitea web interface:**
+
    ```
    http://<LOAD_BALANCER_IP>
    ```
@@ -325,7 +332,7 @@ sudo /usr/local/bin/gitea doctor -c /etc/gitea/app.ini
 ```groovy
 pipeline {
     agent any
-    
+
     stages {
         stage('Deploy Infrastructure') {
             steps {
@@ -335,7 +342,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Get Outputs') {
             steps {
                 dir('tf-az-infra-demoGitea/infra') {
@@ -348,7 +355,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Update Inventory') {
             steps {
                 dir('ansible-az-demoGitea') {
@@ -358,7 +365,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Deploy Gitea') {
             steps {
                 dir('ansible-az-demoGitea') {
