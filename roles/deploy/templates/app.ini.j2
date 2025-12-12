@@ -1,0 +1,73 @@
+; Azure Gitea Configuration - Auto-configured with Azure MySQL Flexible Server
+APP_NAME = Azure Gitea
+RUN_MODE = prod
+RUN_USER = git
+
+[repository]
+ROOT = /var/lib/gitea/data/gitea-repositories
+
+[server]
+PROTOCOL         = http
+DOMAIN           = localhost
+HTTP_PORT        = 3000
+ROOT_URL         = http://localhost:3000/
+DISABLE_SSH      = false
+SSH_PORT         = 22
+LFS_START_SERVER = true
+OFFLINE_MODE     = false
+
+[database]
+DB_TYPE  = mysql
+HOST     = {{ mysql_host }}:3306
+NAME     = {{ mysql_dbname }}
+USER     = {{ mysql_username }}
+PASSWD   = {{ mysql_password }}
+SSL_MODE = disable
+CHARSET  = utf8mb4
+
+[security]
+INSTALL_LOCK   = true
+SECRET_KEY     = {{ gitea_secret_key }}
+INTERNAL_TOKEN = {{ gitea_internal_token }}
+
+[service]
+DISABLE_REGISTRATION       = false
+REQUIRE_SIGNIN_VIEW        = false
+REGISTER_EMAIL_CONFIRM     = false
+ENABLE_NOTIFY_MAIL         = false
+ALLOW_ONLY_EXTERNAL_REGISTRATION = false
+ENABLE_CAPTCHA             = false
+DEFAULT_KEEP_EMAIL_PRIVATE = false
+DEFAULT_ALLOW_CREATE_ORGANIZATION = true
+DEFAULT_ENABLE_TIMETRACKING = true
+NO_REPLY_ADDRESS           = noreply.localhost
+DEFAULT_ORG_VISIBILITY     = public
+
+[mailer]
+ENABLED = false
+
+[session]
+PROVIDER = file
+
+[log]
+MODE      = file
+LEVEL     = info
+ROOT_PATH = /var/lib/gitea/log
+
+[repository.upload]
+ENABLED = true
+
+[admin]
+DISABLE_REGULAR_ORG_CREATION = false
+
+[openid]
+ENABLE_OPENID_SIGNIN = false
+ENABLE_OPENID_SIGNUP = false
+
+[cron]
+ENABLED = true
+
+[indexer]
+REPO_INDEXER_ENABLED = true
+REPO_INDEXER_PATH = /var/lib/gitea/indexers/repos.bleve
+MAX_FILE_SIZE = 1048576
