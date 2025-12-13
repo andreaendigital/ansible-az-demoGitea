@@ -97,14 +97,10 @@ terraform output -raw vm_public_ip
 # Example output: 52.x.x.x
 ```
 
-Also get MySQL credentials:
+Also get MySQL VM IP:
 
 ```bash
-terraform output -raw mysql_server_fqdn
-terraform output -raw mysql_server_host
-terraform output -raw mysql_admin_username
-terraform output -raw mysql_admin_password
-terraform output -raw mysql_database_name
+terraform output -raw mysql_vm_private_ip
 ```
 
 ### 3. Update Inventory File
@@ -118,14 +114,16 @@ vi inventory.ini
 
 Replace:
 
-- `<VM_PUBLIC_IP>` with the static IP from step 2
-- `<MYSQL_FQDN>` with MySQL FQDN
-- `<MYSQL_HOST>` with MySQL host
-- `<MYSQL_USERNAME>` with MySQL username
-- `<MYSQL_PASSWORD>` with MySQL password
-- `<MYSQL_DBNAME>` with database name
+- `<VM_PUBLIC_IP>` with the static public IP from step 2
+- `<MYSQL_VM_PRIVATE_IP>` with MySQL VM private IP
 
 **Note:** Since the IP is static, you only need to do this **once**.
+
+Alternatively, use the automated script:
+
+```bash
+./generate_inventory.sh ../tf-az-infra-demoGitea/infra
+```
 
 ### 4. Configure Variables (Optional)
 
@@ -152,15 +150,19 @@ ansible-vault encrypt group_vars/all.yml
 
 ### 5. Run the Playbook
 
+**IMPORTANT:** Pass `mysql_root_password` via `--extra-vars` for security:
+
 ```bash
-ansible-playbook -i inventory.ini playbook.yml
+ansible-playbook -i inventory.ini playbook.yml --extra-vars "mysql_root_password=YOUR_SECURE_PASSWORD"
 ```
 
 With vault-encrypted variables:
 
 ```bash
-ansible-playbook -i inventory.ini playbook.yml --ask-vault-pass
+ansible-playbook -i inventory.ini playbook.yml --ask-vault-pass --extra-vars "mysql_root_password=YOUR_SECURE_PASSWORD"
 ```
+
+**Note:** The MySQL root password is NOT stored in the inventory for security. It must be passed as an extra variable.
 
 ## ��� Project Structure
 
