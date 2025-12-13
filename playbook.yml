@@ -1,27 +1,27 @@
 ---
 # ====================================
 # MySQL Database Server Setup
-# Only runs in full-stack mode (skip in failover)
+# Runs when [mysql] hosts are present in inventory
 # ====================================
 - hosts: mysql
   become: yes
   roles:
     - mysql
-  when: deployment_mode is defined and deployment_mode != 'failover'
 
 # ====================================
 # Gitea Application Deployment
-# Only runs in full-stack and failover modes (skip in replica-only)
+# Runs when [azureGitea] hosts are present in inventory
 # ====================================
 - hosts: azureGitea
   become: yes
   roles:
     - deploy
-  when: deployment_mode is defined and deployment_mode != 'replica-only'
 
-# Play for MySQL Replica VM (read replica/failover scenario)
+# ====================================
+# MySQL Replica VM Setup
+# Runs when [mysql-replica] hosts are present in inventory
+# ====================================
 - hosts: mysql-replica
   become: yes
   roles:
     - mysql-replica
-  when: deployment_mode is defined and deployment_mode == 'replica-only'
