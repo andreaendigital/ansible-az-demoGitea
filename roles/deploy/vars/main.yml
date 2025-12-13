@@ -1,0 +1,15 @@
+---
+# Gitea deployment variables
+
+# Gitea version to install
+gitea_version: "1.25.2"
+
+# Admin user configuration
+# These can be overridden with --extra-vars in the playbook execution
+gitea_admin_username: "admin"
+gitea_admin_password: "ChangeThisSecurePassword123!"
+gitea_admin_email: "admin@example.com"
+
+# MySQL connection settings
+# mysql_root_password should be passed via --extra-vars for security
+# mysql_host is set in inventory [all:vars]
