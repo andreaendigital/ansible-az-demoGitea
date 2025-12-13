@@ -1,0 +1,15 @@
+---
+# ====================================
+# MySQL Handlers
+# ====================================
+
+- name: restart mysql
+  systemd:
+    name: mysql
+    state: restarted
+    enabled: yes
+
+- name: reload mysql
+  systemd:
+    name: mysql
+    state: reloaded

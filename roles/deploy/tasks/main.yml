@@ -68,12 +68,12 @@
     gitea_secret_key: "{{ gitea_secret_key_output.stdout }}"
     gitea_internal_token: "{{ gitea_internal_token_output.stdout }}"
 
-- name: Wait for Azure MySQL Flexible Server to be available
+- name: Wait for MySQL server to be available
   wait_for:
     host: "{{ mysql_host }}"
     port: 3306
-    timeout: 60
-    delay: 5
+    timeout: 300
+    delay: 10
   when: mysql_host is defined
 
 - name: Deploy Gitea configuration (app.ini) with Azure MySQL
