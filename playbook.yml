@@ -1,4 +1,15 @@
 ---
+# ====================================
+# MySQL Database Server Setup
+# ====================================
+- hosts: mysql
+  become: yes
+  roles:
+    - mysql
+
+# ====================================
+# Gitea Application Deployment
+# ====================================
 - hosts: azureGitea
   become: yes
   roles:
