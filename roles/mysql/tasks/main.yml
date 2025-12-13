@@ -83,7 +83,7 @@
 - name: Create Gitea MySQL user
   mysql_user:
     name: "{{ gitea_db_user }}"
-    password: "{{ mysql_root_password }}"
+    password: "{{ gitea_db_password }}"
     host: "10.1.2.%"
     priv: "{{ gitea_db_name }}.*:ALL"
     state: present
