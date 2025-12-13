@@ -19,9 +19,9 @@ OFFLINE_MODE     = false
 [database]
 DB_TYPE  = mysql
 HOST     = {{ mysql_host }}:3306
-NAME     = {{ mysql_dbname }}
-USER     = {{ mysql_username }}
-PASSWD   = {{ mysql_password }}
+NAME     = {{ gitea_db_name }}
+USER     = {{ gitea_db_user }}
+PASSWD   = {{ gitea_db_password }}
 SSL_MODE = disable
 CHARSET  = utf8mb4
 
