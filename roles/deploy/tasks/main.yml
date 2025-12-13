@@ -226,8 +226,8 @@
 
       🔧 Configuration:
       - Database: Azure MySQL Flexible Server - CONFIGURED ✓
-      - MySQL FQDN: {{ mysql_fqdn }}
-      - Database Name: {{ mysql_dbname }}
+      - MySQL Host: {{ mysql_host }}
+      - Database Name: {{ gitea_db_name }}
       - Install Lock: ENABLED (no web installer)
       - Secret Keys: GENERATED ✓
 
