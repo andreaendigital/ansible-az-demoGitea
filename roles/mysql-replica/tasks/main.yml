@@ -82,6 +82,118 @@
     proto: tcp
   when: ansible_os_family == "Debian"
 
+# ====================================
+# AWS RDS Replication Configuration
+# ====================================
+
+- name: 🔍 Obtain current binlog position from AWS RDS
+  community.mysql.mysql_query:
+    login_host: "{{ aws_rds_endpoint }}"
+    login_user: "{{ aws_replication_user }}"
+    login_password: "{{ aws_replication_password }}"
+    query: "SHOW MASTER STATUS"
+  register: aws_master_status
+  delegate_to: localhost
+  when: deployment_mode == 'replica-only'
+  tags: replication
+
+- name: 📝 Extract binlog file and position
+  set_fact:
+    master_log_file: "{{ aws_master_status.query_result[0][0].File }}"
+    master_log_pos: "{{ aws_master_status.query_result[0][0].Position }}"
+  when: 
+    - deployment_mode == 'replica-only'
+    - aws_master_status.query_result is defined
+  tags: replication
+
+- name: 📊 Display AWS RDS binlog status
+  debug:
+    msg: |
+      ════════════════════════════════════════
+      AWS RDS Replication Configuration
+      ════════════════════════════════════════
+      Master Host: {{ aws_rds_endpoint }}
+      Master User: {{ aws_replication_user }}
+      Master Log File: {{ master_log_file }}
+      Master Log Position: {{ master_log_pos }}
+      ════════════════════════════════════════
+  when: 
+    - deployment_mode == 'replica-only'
+    - master_log_file is defined
+  tags: replication
+
+- name: 🔄 Configure MySQL replication from AWS RDS
+  community.mysql.mysql_replication:
+    mode: changeprimary
+    primary_host: "{{ aws_rds_endpoint }}"
+    primary_user: "{{ aws_replication_user }}"
+    primary_password: "{{ aws_replication_password }}"
+    primary_log_file: "{{ master_log_file }}"
+    primary_log_pos: "{{ master_log_pos }}"
+    primary_connect_retry: 60
+    primary_ssl: false
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  become: yes
+  when: 
+    - deployment_mode == 'replica-only'
+    - master_log_file is defined
+  tags: replication
+
+- name: ▶️ Start MySQL replication
+  community.mysql.mysql_replication:
+    mode: startreplica
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  become: yes
+  when: deployment_mode == 'replica-only'
+  tags: replication
+
+- name: ⏳ Wait for replication to initialize
+  pause:
+    seconds: 5
+  when: deployment_mode == 'replica-only'
+  tags: replication
+
+- name: ✅ Check replication status
+  community.mysql.mysql_replication:
+    mode: getreplica
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  register: replica_status
+  become: yes
+  when: deployment_mode == 'replica-only'
+  tags: replication
+
+- name: 📊 Display replication status
+  debug:
+    msg: |
+      ════════════════════════════════════════
+      MySQL Replication Status
+      ════════════════════════════════════════
+      Replica IO Running: {{ replica_status.Replica_IO_Running | default('N/A') }}
+      Replica SQL Running: {{ replica_status.Replica_SQL_Running | default('N/A') }}
+      Seconds Behind Master: {{ replica_status.Seconds_Behind_Master | default('N/A') }}
+      Last Error: {{ replica_status.Last_SQL_Error | default('None') }}
+      ════════════════════════════════════════
+  when: 
+    - deployment_mode == 'replica-only'
+    - replica_status is defined
+  tags: replication
+
+- name: ⚠️ Fail if replication is not running correctly
+  fail:
+    msg: |
+      Replication failed to start correctly!
+      Replica IO Running: {{ replica_status.Replica_IO_Running }}
+      Replica SQL Running: {{ replica_status.Replica_SQL_Running }}
+      Last Error: {{ replica_status.Last_SQL_Error }}
+  when: 
+    - deployment_mode == 'replica-only'
+    - replica_status is defined
+    - (replica_status.Replica_IO_Running != 'Yes' or replica_status.Replica_SQL_Running != 'Yes')
+  tags: replication
+
 # Handlers
 - name: Restart MySQL
   systemd:
