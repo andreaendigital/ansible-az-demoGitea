@@ -86,7 +86,16 @@
 # AWS RDS Replication Configuration
 # ====================================
 
-- name: 🔍 Obtain current binlog position from AWS RDS
+- name: � Ensure PyMySQL is installed on Jenkins/localhost
+  pip:
+    name: PyMySQL
+    state: present
+  delegate_to: localhost
+  become: no
+  when: deployment_mode == 'replica-only'
+  tags: replication
+
+- name: �🔍 Obtain current binlog position from AWS RDS
   community.mysql.mysql_query:
     login_host: "{{ aws_rds_endpoint }}"
     login_user: "{{ aws_replication_user }}"
