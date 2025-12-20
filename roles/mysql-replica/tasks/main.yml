@@ -97,6 +97,8 @@
   register: aws_master_status
   delegate_to: localhost
   become: no
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
   when: deployment_mode == 'replica-only'
   tags: replication
 
@@ -104,7 +106,7 @@
   set_fact:
     master_log_file: "{{ aws_master_status.query_result[0][0].File }}"
     master_log_pos: "{{ aws_master_status.query_result[0][0].Position }}"
-  when: 
+  when:
     - deployment_mode == 'replica-only'
     - aws_master_status.query_result is defined
   tags: replication
@@ -120,7 +122,7 @@
       Master Log File: {{ master_log_file }}
       Master Log Position: {{ master_log_pos }}
       ════════════════════════════════════════
-  when: 
+  when:
     - deployment_mode == 'replica-only'
     - master_log_file is defined
   tags: replication
@@ -138,7 +140,7 @@
     login_user: root
     login_password: "{{ mysql_root_password }}"
   become: yes
-  when: 
+  when:
     - deployment_mode == 'replica-only'
     - master_log_file is defined
   tags: replication
@@ -179,7 +181,7 @@
       Seconds Behind Master: {{ replica_status.Seconds_Behind_Master | default('N/A') }}
       Last Error: {{ replica_status.Last_SQL_Error | default('None') }}
       ════════════════════════════════════════
-  when: 
+  when:
     - deployment_mode == 'replica-only'
     - replica_status is defined
   tags: replication
@@ -191,7 +193,7 @@
       Replica IO Running: {{ replica_status.Replica_IO_Running }}
       Replica SQL Running: {{ replica_status.Replica_SQL_Running }}
       Last Error: {{ replica_status.Last_SQL_Error }}
-  when: 
+  when:
     - deployment_mode == 'replica-only'
     - replica_status is defined
     - (replica_status.Replica_IO_Running != 'Yes' or replica_status.Replica_SQL_Running != 'Yes')
