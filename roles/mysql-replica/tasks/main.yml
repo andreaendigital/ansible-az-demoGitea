@@ -94,6 +94,7 @@
     query: "SHOW MASTER STATUS"
   register: aws_master_status
   delegate_to: localhost
+  become: no
   when: deployment_mode == 'replica-only'
   tags: replication
 
