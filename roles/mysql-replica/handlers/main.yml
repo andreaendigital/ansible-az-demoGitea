@@ -1,0 +1,18 @@
+---
+# ====================================
+# MySQL Replica Handlers
+# ====================================
+
+- name: Restart MySQL
+  systemd:
+    name: mysql
+    state: restarted
+    enabled: yes
+  become: yes
+
+- name: restart mysql
+  systemd:
+    name: mysql
+    state: restarted
+    enabled: yes
+  become: yes
