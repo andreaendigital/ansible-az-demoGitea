@@ -97,8 +97,6 @@
   register: aws_master_status
   delegate_to: localhost
   become: no
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
   when: deployment_mode == 'replica-only'
   tags: replication
 
