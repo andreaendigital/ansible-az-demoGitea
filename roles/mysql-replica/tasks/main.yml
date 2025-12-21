@@ -85,8 +85,17 @@
 # ====================================
 # AWS RDS Replication Configuration
 # ====================================
-# Note: PyMySQL must be installed on Jenkins manually:
-# sudo apt update && sudo apt install -y python3-pip && pip3 install PyMySQL
+# Note: PyMySQL must be installed on Azure MySQL VM (Ubuntu)
+# The VM has VPN connectivity to AWS RDS
+
+- name: Install python3-pymysql on Azure MySQL VM
+  apt:
+    name: python3-pymysql
+    state: present
+    update_cache: yes
+  become: yes
+  when: deployment_mode == 'replica-only'
+  tags: replication
 
 - name: 🔍 Obtain current binlog position from AWS RDS
   community.mysql.mysql_query:
@@ -95,7 +104,6 @@
     login_password: "{{ aws_replication_password }}"
     query: "SHOW MASTER STATUS"
   register: aws_master_status
-  delegate_to: localhost
   become: no
   when: deployment_mode == 'replica-only'
   tags: replication
