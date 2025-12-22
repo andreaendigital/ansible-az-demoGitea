@@ -26,7 +26,8 @@ This repository contains Ansible playbooks and roles for automating the deployme
 ### Features
 
 - ✅ Automated Gitea installation and configuration
-- ✅ Azure MySQL Flexible Server integration
+- ✅ MySQL Server on dedicated Azure VM
+- ✅ MySQL replica support for high availability
 - ✅ Systemd service management
 - ✅ Idempotent playbooks (safe to run multiple times)
 - ✅ Static IP configuration (no dynamic inventory needed)
@@ -170,16 +171,30 @@ ansible-playbook -i inventory.ini playbook.yml --ask-vault-pass --extra-vars "my
 ansible-az-demoGitea/
 ├── ansible.cfg
 ├── playbook.yml
-├── inventory.ini               # Static inventory (update once)
+├── inventory.ini
 ├── group_vars/
 │   └── all.yml.example
 ├── roles/
-│   └── deploy/
+│   ├── deploy/
+│   │   ├── tasks/
+│   │   │   └── main.yml
+│   │   └── templates/
+│   │       ├── app.ini.j2
+│   │       └── gitea.service
+│   ├── mysql/
+│   │   ├── tasks/
+│   │   │   └── main.yml
+│   │   ├── handlers/
+│   │   │   └── main.yml
+│   │   └── templates/
+│   │       └── mysqld-override.cnf.j2
+│   └── mysql-replica/
 │       ├── tasks/
 │       │   └── main.yml
+│       ├── handlers/
+│       │   └── main.yml
 │       └── templates/
-│           ├── app.ini.j2
-│           └── gitea.service
+│           └── my.cnf.j2
 └── .github/
     └── pull_request_template.md
 ```
@@ -212,14 +227,14 @@ Omit the `gitea_admin_*` variables. The first user to register becomes admin.
 
 ## ��� Key Differences from AWS Version
 
-| Aspect              | AWS (ANSIBLE-DEMOGITEA)           | Azure (This Repo)           |
-| ------------------- | --------------------------------- | --------------------------- |
-| **Inventory**       | Dynamic (`generate_inventory.sh`) | Static (one-time setup)     |
-| **IP Type**         | Dynamic (changes each deploy)     | **Static** (never changes)  |
-| **Host Group**      | `infraGitea`                      | `azureGitea`                |
-| **SSH User**        | `ec2-user`                        | `azureuser`                 |
-| **Package Manager** | `yum` (Amazon Linux)              | `apt` (Ubuntu)              |
-| **Database**        | AWS RDS                           | Azure MySQL Flexible Server |
+| Aspect              | AWS (ANSIBLE-DEMOGITEA)           | Azure (This Repo)        |
+| ------------------- | --------------------------------- | ------------------------ |
+| **Inventory**       | Dynamic (`generate_inventory.sh`) | Static (one-time setup)  |
+| **IP Type**         | Dynamic (changes each deploy)     | **Static** (never changes) |
+| **Host Group**      | `infraGitea`                      | `azureGitea`             |
+| **SSH User**        | `ec2-user`                        | `azureuser`              |
+| **Package Manager** | `yum` (Amazon Linux)              | `apt` (Ubuntu)           |
+| **Database**        | AWS RDS                           | MySQL Server on Azure VM |
 
 ## ��� Security Best Practices
 
