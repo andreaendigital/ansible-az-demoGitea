@@ -1,8 +1,4 @@
 ---
-# ====================================
-# MySQL Replica Handlers
-# ====================================
-
 - name: Restart MySQL
   systemd:
     name: mysql

@@ -1,6 +1,6 @@
 ## Description
 
-This PR completes the Ansible automation for deploying Gitea on Azure Virtual Machines with MySQL Flexible Server integration. It includes static inventory management, comprehensive role-based deployment, and full documentation for the Azure infrastructure.
+This PR completes the Ansible automation for deploying Gitea on Azure Virtual Machines with MySQL Server on a dedicated VM. It includes static inventory management, comprehensive role-based deployment, and full documentation for the Azure infrastructure.
 
 ## Type of Change
 
@@ -12,7 +12,7 @@ This PR completes the Ansible automation for deploying Gitea on Azure Virtual Ma
 ## Azure Environment Impact
 
 - [x] Ansible playbook for Azure VM configuration
-- [x] MySQL Flexible Server connection configured
+- [x] MySQL Server on dedicated VM configured
 - [x] Gitea application deployment automated
 - [x] Systemd service management implemented
 - [x] Static inventory for stable IP addressing
@@ -70,8 +70,8 @@ ANSIBLE-AZ-DEMOGITEA/
 
 3. **MySQL Integration**
 
-   - Connects to Azure MySQL Flexible Server
-   - Uses private endpoint (VNet integrated)
+   - Connects to MySQL Server on dedicated Azure VM
+   - Uses private IP (VNet integrated)
    - Waits for database availability
    - Handles connection parameters securely
 
@@ -284,7 +284,7 @@ Closes DEMO-22
 
 1. **Static Inventory**: Azure uses static IP, AWS uses dynamic generation
 2. **Host Group Name**: `azureGitea` vs `infraGitea` (clear cloud identification)
-3. **MySQL Connection**: Azure MySQL Flexible Server vs AWS RDS
+3. **MySQL Connection**: MySQL Server on Azure VM vs AWS RDS
 4. **VM User**: `azureuser` (Ubuntu) vs `ec2-user` (Amazon Linux)
 
 ### Compatibility:

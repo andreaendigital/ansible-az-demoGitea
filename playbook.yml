@@ -1,26 +1,14 @@
 ---
-# ====================================
-# MySQL Database Server Setup
-# Runs when [mysql] hosts are present in inventory
-# ====================================
 - hosts: mysql
   become: yes
   roles:
     - mysql
 
-# ====================================
-# Gitea Application Deployment
-# Runs when [azureGitea] hosts are present in inventory
-# ====================================
 - hosts: azureGitea
   become: yes
   roles:
     - deploy
 
-# ====================================
-# MySQL Replica VM Setup
-# Runs when [mysql-replica] hosts are present in inventory
-# ====================================
 - hosts: mysql-replica
   become: yes
   roles:

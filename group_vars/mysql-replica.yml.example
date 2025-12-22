@@ -1,4 +1,3 @@
-# Example group_vars for MySQL replica host
 mysql_root_password: "ChangeThisRootPassword!"
 gitea_replica_user: "gitea_replica"
 gitea_replica_password: "ChangeThisReplicaPassword!"

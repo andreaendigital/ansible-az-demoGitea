@@ -4,7 +4,6 @@ log_bin = /var/log/mysql/mysql-bin.log
 binlog_do_db = {{ gitea_replica_db }}
 bind-address = 0.0.0.0
 
-# Other recommended settings for replica
 relay_log = /var/log/mysql/mysql-relay-bin.log
 log_slave_updates = 1
 read_only = 1

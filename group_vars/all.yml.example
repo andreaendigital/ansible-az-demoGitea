@@ -1,41 +1,5 @@
-# Azure Gitea Demo Configuration
-# Using Azure MySQL Flexible Server for production-ready setup
-
-# Gitea version
 gitea_version: "1.25.2"
-
-# Database: Azure MySQL Flexible Server (configured automatically via generate_inventory.sh)
-# Production-ready setup with external database
-
-# =============================================================================
-# OPTIONAL: Pre-configure Admin User
-# =============================================================================
-# Uncomment the following lines to automatically create an admin user
-# during deployment. If these variables are not set, the first user
-# to register through the web UI will automatically become admin.
 
 gitea_admin_username: "admin"
 gitea_admin_password: "ChangeThisSecurePassword123!"
 gitea_admin_email: "admin@example.com"
-
-# =============================================================================
-# SECURITY NOTES
-# =============================================================================
-# 1. CHANGE the default password before using in production
-# 2. Consider using Ansible Vault to encrypt credentials:
-#    ansible-vault encrypt group_vars/all.yml
-# 3. After first login, admin should change their password
-# 4. For production, consider using Azure Key Vault or environment variables
-# 5. Never commit unencrypted passwords to version control
-
-# =============================================================================
-# ALTERNATIVE CONFIGURATION (Without Predefined Admin)
-# =============================================================================
-# If you prefer NOT to create an admin automatically, simply comment out
-# or delete the three gitea_admin_* variables above.
-#
-# In that case:
-# - The first user to register will automatically become admin
-# - DISABLE_REGISTRATION = false (registration is open)
-# - Each team can choose their own credentials
-# - Ideal for development and demo environments

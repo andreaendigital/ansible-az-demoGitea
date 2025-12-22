@@ -1,6 +1,4 @@
 ---
-# Install and configure MySQL as a read replica for Gitea
-
 - name: Install MySQL Server
   apt:
     name: mysql-server
@@ -81,12 +79,6 @@
     port: 3306
     proto: tcp
   when: ansible_os_family == "Debian"
-
-# ====================================
-# AWS RDS Replication Configuration
-# ====================================
-# Note: PyMySQL must be installed on Azure MySQL VM (Ubuntu)
-# The VM has VPN connectivity to AWS RDS
 
 - name: Install python3-pymysql on Azure MySQL VM
   apt:

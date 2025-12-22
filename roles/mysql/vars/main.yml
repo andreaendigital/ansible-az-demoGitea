@@ -1,11 +1,3 @@
 ---
-# ====================================
-# MySQL Role Variables
-# ====================================
-
-# Database configuration
 gitea_db_name: "gitea"
 gitea_db_user: "gitea"
-
-# Note: mysql_root_password should be passed via extra-vars for security
-# Do not hardcode passwords here in production

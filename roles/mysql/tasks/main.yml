@@ -1,8 +1,4 @@
 ---
-# ====================================
-# MySQL Server Installation and Configuration
-# ====================================
-
 - name: Update apt cache
   apt:
     update_cache: yes
